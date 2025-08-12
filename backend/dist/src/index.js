@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const express = require('express');
-const bodyParser = require('body-parser');
+const express = require("express");
+const connectDB = require("./config/bd");
+connectDB();
 const app = express();
-const port = 3000;
-app.use(bodyParser.json());
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+app.get("/", (_req, _res) => {
+    _res.send("Hola mundo");
 });
+app.listen(3000, () => console.log("Servidor escuchando http://localhost:3000"));
 //# sourceMappingURL=index.js.map
