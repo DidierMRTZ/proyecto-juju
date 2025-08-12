@@ -1,0 +1,28 @@
+{
+  "name": "proyecto-juju",
+  "version": "1.0.0",
+  "description": "Prueba tecnica para proyecto juju",
+  "homepage": "https://github.com/DidierMRTZ/proyecto-juju#readme",
+  "bugs": {
+    "url": "https://github.com/DidierMRTZ/proyecto-juju/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DidierMRTZ/proyecto-juju.git"
+  },
+  "license": "ISC",
+  "author": "Didier Martinez",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.2.1",
+    "typescript": "^5.9.2"
+  }
+}
