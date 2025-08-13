@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/bd';
 import userRoutes from './routes/userRoutes';
+import tokenRoutes from './routes/tokenRoutes';
 
 // cargar variables de entorno
 dotenv.config();
@@ -23,11 +24,20 @@ app.get('/', (req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     endpoints: {
-      createUser: 'POST /api/users',
-      login: 'POST /api/users/login',
-      getAllUsers: 'GET /api/users',
-      getUsersByRole: 'GET /api/users/role/:role',
-      getUserByEmail: 'GET /api/users/:email'
+      users: {
+        createUser: 'POST /api/users',
+        login: 'POST /api/users/login',
+        getAllUsers: 'GET /api/users',
+        getUsersByRole: 'GET /api/users/role/:role',
+        getUserByEmail: 'GET /api/users/:email'
+      },
+      tokens: {
+        createResetToken: 'POST /api/tokens/reset-password',
+        resetPassword: 'POST /api/tokens/reset-password/confirm',
+        getUserTokens: 'GET /api/tokens/user/:userId',
+        cleanupTokens: 'POST /api/tokens/cleanup',
+
+      }
     }
   });
 });
@@ -43,6 +53,7 @@ app.get('/health', (req, res) => {
 
 // rutas de la API
 app.use('/api/users', userRoutes);
+app.use('/api/tokens', tokenRoutes);
 
 // manejo de errores
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -64,7 +75,12 @@ app.use('*', (req, res) => {
       'POST /api/users/login - login',
       'GET /api/users - listar usuarios',
       'GET /api/users/role/:role - por rol',
-      'GET /api/users/:email - por email'
+      'GET /api/users/:email - por email',
+      'POST /api/tokens/reset-password - crear token reset',
+      'POST /api/tokens/reset-password/confirm - resetear password',
+      'GET /api/tokens/user/:userId - tokens del usuario',
+      'POST /api/tokens/cleanup - limpiar tokens',
+
     ]
   });
 });
@@ -82,13 +98,18 @@ const startServer = async () => {
       console.log(`Health: http://localhost:${port}/health`);
       console.log(`API: http://localhost:${port}/api/users`);
       console.log('=====================================');
-      console.log('Endpoints:');
-      console.log(`  POST /api/users - crear`);
-      console.log(`  POST /api/users/login - login`);
-      console.log(`  GET  /api/users - listar`);
-      console.log(`  GET  /api/users/role/:role - por rol`);
-      console.log(`  GET  /api/users/:email - buscar`);
-      console.log('=====================================');
+          console.log('Endpoints:');
+    console.log(`  POST /api/users - crear`);
+    console.log(`  POST /api/users/login - login`);
+    console.log(`  GET  /api/users - listar`);
+    console.log(`  GET  /api/users/role/:role - por rol`);
+    console.log(`  GET  /api/users/:email - buscar`);
+    console.log('  --- Tokens ---');
+    console.log(`  POST /api/tokens/reset-password - crear token reset`);
+    console.log(`  POST /api/tokens/reset-password/confirm - resetear password`);
+    console.log(`  GET  /api/tokens/user/:userId - tokens del usuario`);
+    console.log(`  POST /api/tokens/cleanup - limpiar tokens`);
+    console.log('=====================================');
     });
   } catch (error) {
     console.error('Error iniciando servidor:', error);
