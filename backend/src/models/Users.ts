@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
+import bcrypt from 'bcrypt';
 
 // Interfaz para el documento de usuario
 export interface IUser extends Document {
@@ -120,8 +121,13 @@ userSchema.index({ name: 'text', email: 'text' }); // Búsqueda de texto
 
 // Métodos de instancia
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
-  // En producción, aquí deberías comparar con hash bcrypt
-  return this.password === candidatePassword;
+  try {
+    // Comparar contraseña candidata con el hash almacenado
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    console.error('Error comparando contraseñas:', error);
+    return false;
+  }
 };
 
 // Métodos estáticos
@@ -134,23 +140,28 @@ userSchema.statics.findActiveUsers = function(): Promise<IUser[]> {
 };
 
 // Middleware pre-save para validaciones y transformaciones
-userSchema.pre('save', function(next) {
-  // Capitalizar primera letra del nombre
-  if (this.name) {
-    this.name = this.name.charAt(0).toUpperCase() + this.name.slice(1).toLowerCase();
+userSchema.pre('save', async function(next) {
+  try {
+    // Capitalizar primera letra del nombre
+    if (this.name) {
+      this.name = this.name.charAt(0).toUpperCase() + this.name.slice(1).toLowerCase();
+    }
+    
+    // Normalizar email
+    if (this.email) {
+      this.email = this.email.toLowerCase().trim();
+    }
+    
+    // Hashear contraseña solo si se modificó o es nueva
+    if (this.isModified('password')) {
+      const saltRounds = 12; // Número de rondas de salt (más alto = más seguro pero más lento)
+      this.password = await bcrypt.hash(this.password, saltRounds);
+    }
+    
+    next();
+  } catch (error: any) {
+    next(error);
   }
-  
-  // Normalizar email
-  if (this.email) {
-    this.email = this.email.toLowerCase().trim();
-  }
-  
-  // En producción, aquí hashearías la contraseña
-  // if (this.isModified('password')) {
-  //   this.password = await bcrypt.hash(this.password, 10);
-  // }
-  
-  next();
 });
 
 // Middleware pre-validate para validaciones personalizadas
@@ -180,6 +191,14 @@ userSchema.post('save', function(doc) {
 userSchema.post('deleteOne', function(doc) {
   if (doc) {
     console.log(`🗑️ Usuario ${doc.email} eliminado`);
+  }
+});
+
+// Transformar documento para excluir password automáticamente
+userSchema.set('toJSON', {
+  transform: function(doc, ret: any) {
+    delete ret.password; // Eliminar password de todas las respuestas
+    return ret;
   }
 });
 

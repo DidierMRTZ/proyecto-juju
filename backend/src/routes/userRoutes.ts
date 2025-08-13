@@ -1,12 +1,13 @@
 import { Router } from 'express';
-import { createUser, getAllUsers, getUserByEmail, getUsersByRole } from '../controllers/userControllers';
+import { createUser, loginUser, getAllUsers, getUserByEmail, getUsersByRole } from '../controllers/userControllers';
 
 const router = Router();
 
-// Rutas para usuarios
-router.post('/', createUser);                    // POST /api/users - Crear usuario
-router.get('/', getAllUsers);                    // GET /api/users - Obtener todos los usuarios
-router.get('/role/:role', getUsersByRole);      // GET /api/users/role/:role - Obtener usuarios por rol
-router.get('/:email', getUserByEmail);          // GET /api/users/:email - Buscar usuario por email
+// rutas de usuarios
+router.post('/', createUser);                    // crear usuario
+router.post('/login', loginUser);               // login
+router.get('/', getAllUsers);                    // listar todos
+router.get('/role/:role', getUsersByRole);      // por rol
+router.get('/:email', getUserByEmail);          // buscar por email
 
 export default router;
