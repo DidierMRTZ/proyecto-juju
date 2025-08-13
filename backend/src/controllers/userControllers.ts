@@ -1,56 +1,57 @@
 import { Request, Response } from 'express';
-import Users, { IUser } from '../models/Users';
+import jwt from 'jsonwebtoken';
+import User, { IUser } from '../models/Users';
 
-// Crear un nuevo usuario
+// crear usuario nuevo
 export const createUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password, age, phone, role } = req.body;
 
-    // Validar campos requeridos
+    // check required fields
     if (!name || !email || !password) {
       res.status(400).json({
         success: false,
-        message: 'Los campos name, email y password son requeridos'
+        message: 'Faltan campos obligatorios: name, email, password'
       });
       return;
     }
 
-    // Verificar si el usuario ya existe usando el método estático del modelo
-    const existingUser = await Users.findByEmail(email);
+    // ver si ya existe el usuario
+    const existingUser = await User.findByEmail(email);
     if (existingUser) {
       res.status(409).json({
         success: false,
-        message: 'Ya existe un usuario con este email'
+        message: 'Este email ya está registrado'
       });
       return;
     }
 
-    // Crear el nuevo usuario con campos opcionales
-    const newUser = new Users({
+    // crear el usuario
+    const newUser = new User({
       name,
       email,
       password,
       age: age || undefined,
       phone: phone || undefined,
-      role: role || 'user'
+      role: role || 'user' // default role
     });
 
-    // Guardar el usuario en la base de datos
+    // guardar en BD
     const savedUser = await newUser.save();
 
-    // Retornar el usuario creado (sin password) usando toJSON del modelo
+    // retornar respuesta sin password
     const userResponse = savedUser.toJSON();
 
     res.status(201).json({
       success: true,
-      message: 'Usuario creado exitosamente',
+      message: 'Usuario creado!',
       data: userResponse
     });
 
   } catch (error: any) {
-    console.error('❌ Error creando usuario:', error);
+    console.error('Error al crear usuario:', error);
     
-    // Manejar errores de validación de Mongoose
+    // validation errors
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map((err: any) => err.message);
       res.status(400).json({
@@ -61,52 +62,127 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // Error genérico
+    // generic error
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor'
+      message: 'Algo salió mal en el servidor'
     });
   }
 };
 
-// Obtener todos los usuarios
+// login de usuario
+export const loginUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+
+    // validar campos
+    if (!email || !password) {
+      res.status(400).json({
+        success: false,
+        message: 'Email y password son requeridos'
+      });
+      return;
+    }
+
+    // buscar usuario por email
+    const user = await User.findByEmail(email);
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        message: 'Credenciales inválidas'
+      });
+      return;
+    }
+
+    // verificar si el usuario está activo
+    if (!user.isActive) {
+      res.status(401).json({
+        success: false,
+        message: 'Cuenta desactivada'
+      });
+      return;
+    }
+
+    // verificar contraseña usando bcrypt
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      res.status(401).json({
+        success: false,
+        message: 'Credenciales inválidas'
+      });
+      return;
+    }
+
+    // generar JWT token
+    const jwtSecret = process.env.JWT_SECRET || 'tu-secret-key-super-segura';
+    const token = jwt.sign(
+      {
+        userId: user._id,
+        email: user.email,
+        role: user.role
+      },
+      jwtSecret,
+      { expiresIn: '24h' } // token expira en 24 horas
+    );
+
+    // login exitoso - retornar usuario sin password y token
+    const userResponse = user.toJSON();
+
+    res.status(200).json({
+      success: true,
+      message: 'Login exitoso',
+      data: {
+        user: userResponse,
+        token: token
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Error en login:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error del servidor'
+    });
+  }
+};
+
+// obtener todos los usuarios
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Usar el método estático del modelo para obtener usuarios activos
-    const users = await Users.findActiveUsers();
+    // usar el método del modelo
+    const users = await User.findActiveUsers();
     
     res.status(200).json({
       success: true,
-      message: 'Usuarios obtenidos exitosamente',
+      message: 'Usuarios obtenidos',
       count: users.length,
       data: users
     });
 
   } catch (error: any) {
-    console.error('❌ Error obteniendo usuarios:', error);
+    console.error('Error obteniendo usuarios:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor'
+      message: 'Error del servidor'
     });
   }
 };
 
-// Buscar usuario por email
+// buscar por email
 export const getUserByEmail = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email } = req.params;
 
-    // Validar que se proporcione el email
     if (!email) {
       res.status(400).json({
         success: false,
-        message: 'El email es requerido'
+        message: 'Email es requerido'
       });
       return;
     }
 
-    // Usar el método estático del modelo para buscar por email
-    const user = await Users.findByEmail(email);
+    // buscar usuario
+    const user = await User.findByEmail(email);
     
     if (!user) {
       res.status(404).json({
@@ -117,63 +193,61 @@ export const getUserByEmail = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Usar toJSON del modelo para excluir password automáticamente
     const userResponse = user.toJSON();
 
     res.status(200).json({
       success: true,
-      message: 'Usuario encontrado exitosamente',
+      message: 'Usuario encontrado',
       data: userResponse
     });
 
   } catch (error: any) {
-    console.error('❌ Error buscando usuario por email:', error);
+    console.error('Error buscando usuario:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor'
+      message: 'Error interno'
     });
   }
 };
 
-// Obtener usuarios por rol
+// obtener usuarios por rol
 export const getUsersByRole = async (req: Request, res: Response): Promise<void> => {
   try {
     const { role } = req.params;
 
-    // Validar que se proporcione el rol
     if (!role) {
       res.status(400).json({
         success: false,
-        message: 'El rol es requerido'
+        message: 'Rol es requerido'
       });
       return;
     }
 
-    // Validar que el rol sea válido
+    // validar rol
     const validRoles = ['user', 'admin', 'moderator'];
     if (!validRoles.includes(role)) {
       res.status(400).json({
         success: false,
-        message: 'Rol inválido. Roles válidos: user, admin, moderator'
+        message: `Rol inválido. Debe ser: ${validRoles.join(', ')}`
       });
       return;
     }
 
-    // Buscar usuarios por rol
-    const users = await Users.find({ role, isActive: true }, '-password').sort({ createdAt: -1 });
+    // buscar por rol
+    const users = await User.find({ role, isActive: true }, '-password').sort({ createdAt: -1 });
     
     res.status(200).json({
       success: true,
-      message: `Usuarios con rol ${role} obtenidos exitosamente`,
+      message: `Usuarios con rol ${role}`,
       count: users.length,
       data: users
     });
 
   } catch (error: any) {
-    console.error('❌ Error obteniendo usuarios por rol:', error);
+    console.error('Error obteniendo usuarios por rol:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor'
+      message: 'Error del servidor'
     });
   }
 };
