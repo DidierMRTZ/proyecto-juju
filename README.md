@@ -27,7 +27,7 @@ Sistema completo de gestión de biblioteca con frontend Angular y backend Node.j
 ```bash
 git clone https://github.com/DidierMRTZ/proyecto-juju.git
 cd proyecto-juju
-o (si se descarga manualmente)
+o (si se descarga local)
 cd proyecto-juju-main
 ```
 
