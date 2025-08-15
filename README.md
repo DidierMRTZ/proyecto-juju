@@ -49,6 +49,8 @@ docker-compose up -d
 # En la misma carpeta backend
 npm install
 npm run build
+# Insertar datos de prueba
+npm run test
 npm run dev
 ```
 
