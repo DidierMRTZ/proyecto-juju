@@ -12,7 +12,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: example
       MONGO_INITDB_DATABASE: mydatabase
     volumes:
-      - mongodb_data:/data/db
+      - ./mongo-data:/data/db
     networks:
       - juju-network
 
@@ -34,9 +34,6 @@ services:
       - mongo
     networks:
       - juju-network
-
-volumes:
-  mongodb_data:
 
 networks:
   juju-network:

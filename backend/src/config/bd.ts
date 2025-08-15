@@ -9,12 +9,14 @@ const connectDB = async (): Promise<void> => {
     
     // Verificar que la conexión esté establecida
     if (mongoose.connection.db) {
-      console.log('✅ Conectado a MongoDB exitosamente');
+      console.log('Conectado a MongoDB exitosamente');
     }
   } catch (error) {
-    console.error('❌ Error conectando a MongoDB:', error);
+    console.error('Error conectando a MongoDB:', error);
     // En modo local, no salir del proceso
-    process.exit(1);
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
   }
 };
 
