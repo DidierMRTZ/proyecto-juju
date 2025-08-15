@@ -26,6 +26,8 @@ Sistema completo de gestión de biblioteca con frontend Angular y backend Node.j
 ### 1. Clonar y configurar
 ```bash
 git clone https://github.com/DidierMRTZ/proyecto-juju.git
+cd proyecto-juju
+o (si se descarga manualmente)
 cd proyecto-juju-main
 ```
 
