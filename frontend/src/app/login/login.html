@@ -1,0 +1,314 @@
+<div class="login-container">
+  <div class="login-form">
+    <!-- Pestañas de navegación -->
+    <div class="tabs-container">
+      <button 
+        [class.active]="currentTab === 'login'" 
+        (click)="setTab('login')" 
+        class="tab-btn login-tab">
+        🔐 Login
+      </button>
+      <button 
+        [class.active]="currentTab === 'signup'" 
+        (click)="setTab('signup')" 
+        class="tab-btn signup-tab">
+        ➕ Signup
+      </button>
+      <button 
+        [class.active]="currentTab === 'reset'" 
+        (click)="setTab('reset')" 
+        class="tab-btn reset-tab">
+        🔑 Recuperar
+      </button>
+    </div>
+
+    <!-- Contenido de Login -->
+    <div *ngIf="currentTab === 'login'" class="tab-content">
+      <h2>🔐 Iniciar Sesión</h2>
+      
+      <div *ngIf="success" class="success">
+        {{ success }}
+      </div>
+      <div *ngIf="error" class="error">
+        {{ error }}
+      </div>
+      
+      <form (ngSubmit)="onLogin()" #loginForm="ngForm">
+        <div class="form-group">
+          <label for="email">📧 Email:</label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email"
+            [(ngModel)]="email" 
+            required 
+            class="form-input"
+            placeholder="tu@email.com">
+        </div>
+        
+        <div class="form-group">
+          <label for="password">🔒 Contraseña:</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password"
+            [(ngModel)]="password" 
+            required 
+            class="form-input"
+            placeholder="Tu contraseña">
+        </div>
+        
+        <button type="submit" [disabled]="isLoading" class="submit-btn">
+          <span *ngIf="!isLoading">🚀 Iniciar Sesión</span>
+          <span *ngIf="isLoading">⏳ Iniciando...</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Contenido de Signup -->
+    <div *ngIf="currentTab === 'signup'" class="tab-content">
+      <h2>➕ Crear Cuenta</h2>
+      
+      <div *ngIf="signupSuccess" class="success">
+        {{ signupSuccess }}
+      </div>
+      <div *ngIf="signupError" class="error">
+        {{ signupError }}
+      </div>
+      
+      <form (ngSubmit)="onSignup()" #signupForm="ngForm">
+        <div class="form-group">
+          <label for="signup-name">👤 Nombre:</label>
+          <input 
+            type="text" 
+            id="signup-name" 
+            name="name"
+            [(ngModel)]="signupData.name" 
+            required 
+            class="form-input"
+            placeholder="Tu nombre completo">
+        </div>
+        
+        <div class="form-group">
+          <label for="signup-email">📧 Email:</label>
+          <input 
+            type="email" 
+            id="signup-email" 
+            name="signupEmail"
+            [(ngModel)]="signupData.email" 
+            required 
+            class="form-input"
+            placeholder="tu@email.com">
+        </div>
+        
+        <div class="form-group">
+          <label for="signup-password">🔒 Contraseña:</label>
+          <input 
+            type="password" 
+            id="signup-password" 
+            name="signupPassword"
+            [(ngModel)]="signupData.password" 
+            required 
+            class="form-input"
+            placeholder="Ej: Admin123!"
+            minlength="6">
+          <small class="password-requirements">
+            📋 Requisitos: Mínimo 6 caracteres, mayúscula inicial, número y carácter especial
+          </small>
+        </div>
+        
+        <div class="form-group">
+          <label for="signup-confirm">🔐 Confirmar Contraseña:</label>
+          <input 
+            type="password" 
+            id="signup-confirm" 
+            name="signupConfirm"
+            [(ngModel)]="signupData.confirmPassword" 
+            required 
+            class="form-input"
+            placeholder="Repite tu contraseña">
+        </div>
+        
+        <button type="submit" [disabled]="isSignupLoading" class="submit-btn signup-btn">
+          <span *ngIf="!isSignupLoading">✅ Crear Cuenta</span>
+          <span *ngIf="isSignupLoading">⏳ Creando...</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Pestaña de Recuperar Contraseña -->
+    <div *ngIf="currentTab === 'reset'" class="tab-content reset-tab-content">
+      <h2>🔑 Recuperar Contraseña</h2>
+      
+      <div class="reset-form">
+        <p class="instruction-text">
+          📧 Ingresa tu email para recibir instrucciones de recuperación de contraseña.
+        </p>
+        
+        <form (ngSubmit)="onResetPassword()" #resetForm="ngForm">
+          <div class="form-group">
+            <label for="reset-email">📧 Email:</label>
+            <input 
+              type="email" 
+              id="reset-email" 
+              name="resetEmail"
+              [(ngModel)]="resetData.email" 
+              required 
+              class="form-input"
+              placeholder="ejemplo@correo.com"
+              [disabled]="isResetLoading">
+          </div>
+          
+          <button type="submit" [disabled]="isResetLoading" class="submit-btn reset-btn">
+            <span *ngIf="!isResetLoading">📧 Enviar Instrucciones</span>
+            <span *ngIf="isResetLoading">⏳ Enviando...</span>
+          </button>
+          
+          <!-- Botón de prueba para abrir modal -->
+          <button type="button" (click)="testOpenModal()" class="test-modal-btn">
+            🔑 Cambiar Contraseña
+          </button>
+        </form>
+        
+        <!-- Mensajes de estado -->
+        <div *ngIf="resetSuccess" class="reset-success">
+          {{ resetSuccess }}
+        </div>
+        
+        <div *ngIf="resetError" class="reset-error">
+          {{ resetError }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Información de la API -->
+    <div class="api-info">
+      <h3>🔗 Información de la API</h3>
+      <p><strong>🔐 Login:</strong> POST http://localhost:3000/api/users/login</p>
+      <p><strong>➕ Signup:</strong> POST http://localhost:3000/api/users</p>
+      <p><strong>🔑 Reset Password:</strong> POST http://localhost:3000/api/tokens/reset-password</p>
+      <p><strong>🔐 Autenticación:</strong> Bearer Token requerido para libros</p>
+    </div>
+    
+    <div class="test-users">
+      <h4>🧪 Usuarios de Prueba</h4>
+      <ul>
+        <li><strong>Email:</strong> admin@test.com | <strong>Password:</strong> Admin123!</li>
+        <li><strong>Email:</strong> user@test.com | <strong>Password:</strong> User123!</li>
+        <li><strong>Email:</strong> test@test.com | <strong>Password:</strong> Test123!</li>
+      </ul>
+    </div>
+    
+    <div class="token-actions">
+      <h4>🔑 Gestión de Token</h4>
+      <button (click)="clearToken()" class="clear-token-btn">
+        🧹 Limpiar Token
+      </button>
+      <button *ngIf="hasValidToken()" (click)="goToBooks()" class="go-books-btn">
+        📚 Ir a Libros
+      </button>
+      <p class="token-info">Útil para testing y logout manual</p>
+    </div>
+  </div>
+  
+  <!-- Modal para mostrar datos de reset password -->
+  <div *ngIf="showResetModal" class="modal-overlay" (click)="closeResetModal()">
+    <div class="modal-content reset-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>🔑 Cambiar Contraseña</h2>
+        <button class="close-btn" (click)="closeResetModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="reset-token-info">
+          <div class="info-section">
+            <h3>📧 Email: {{ resetData.email }}</h3>
+            <div class="token-display" *ngIf="resetTokenData.token">
+              <h4>🔑 Reset Token:</h4>
+              <div class="token-input-group">
+                <input 
+                  type="text" 
+                  class="token-input" 
+                  [value]="resetTokenData.token" 
+                  readonly>
+                <button 
+                  type="button" 
+                  class="copy-btn" 
+                  (click)="copyResetToken()"
+                  [class.copied]="tokenCopied">
+                  <span *ngIf="!tokenCopied">📋 Copiar</span>
+                  <span *ngIf="tokenCopied">✅ Copiado</span>
+                </button>
+              </div>
+              <p class="token-info">
+                <strong>⏰ Creado:</strong> {{ resetTokenData.createdAt ? (resetTokenData.createdAt | date:'medium') : 'No especificado' }}
+              </p>
+            </div>
+            <p class="instruction">Ingresa el resetToken y tu nueva contraseña:</p>
+          </div>
+          
+          <form (ngSubmit)="confirmResetPassword()" #resetPasswordForm="ngForm">
+            <div class="form-group">
+              <label for="reset-token-input">🔑 Reset Token:</label>
+              <input 
+                type="text" 
+                id="reset-token-input" 
+                name="resetToken"
+                [(ngModel)]="resetPasswordData.token" 
+                required 
+                class="form-input"
+                placeholder="Pega aquí el resetToken de recuperación">
+            </div>
+            
+            <div class="form-group">
+              <label for="new-password">🔒 Nueva Contraseña:</label>
+              <input 
+                type="password" 
+                id="new-password" 
+                name="newPassword"
+                [(ngModel)]="resetPasswordData.newPassword" 
+                required 
+                class="form-input"
+                placeholder="Ej: NuevaPass123!"
+                minlength="6">
+              <small class="password-requirements">
+                📋 Requisitos: Mínimo 6 caracteres, mayúscula inicial, número y carácter especial
+              </small>
+            </div>
+            
+            <div class="form-group">
+              <label for="confirm-new-password">🔐 Confirmar Nueva Contraseña:</label>
+              <input 
+                type="password" 
+                id="confirm-new-password" 
+                name="confirmNewPassword"
+                [(ngModel)]="resetPasswordData.confirmPassword" 
+                required 
+                class="form-input"
+                placeholder="Repite tu nueva contraseña">
+            </div>
+            
+            <div class="form-actions">
+              <button type="submit" [disabled]="isConfirmingReset" class="submit-btn reset-confirm-btn">
+                <span *ngIf="!isConfirmingReset">💾 Cambiar Contraseña</span>
+                <span *ngIf="isConfirmingReset">⏳ Cambiando...</span>
+              </button>
+            </div>
+          </form>
+          
+          <div class="token-help">
+            <h4>❓ ¿No tienes el token?</h4>
+            <p>Si no tienes el token de recuperación, solicita uno nuevo en la pestaña "Recuperar".</p>
+            <button (click)="requestNewToken()" class="request-token-btn">
+              🔑 Solicitar Nuevo Token
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="close-modal-btn" (click)="closeResetModal()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

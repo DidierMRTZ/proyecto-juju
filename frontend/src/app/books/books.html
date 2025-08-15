@@ -1,0 +1,291 @@
+<div class="books-container">
+  <div class="books-header">
+    <h1>📚 Biblioteca de Libros</h1>
+    <div class="user-info">
+      <span>👤 Usuario: {{ getUserEmail() }} ({{ getUserRole() }})</span>
+      <button (click)="logout()" class="logout-btn">🚪 Cerrar Sesión</button>
+    </div>
+  </div>
+  
+  <div class="books-section">
+    <h2>📖 Lista de Libros ({{ totalCount }})</h2>
+    
+    <!-- Indicador de carga automática -->
+    <div *ngIf="isLoading" class="auto-loading">
+      <p>🔗 Probando API automáticamente...</p>
+      <div class="loading-spinner"></div>
+    </div>
+    
+    <!-- Botón de debug para verificar estado -->
+    <div class="debug-buttons">
+      <button (click)="viewBooks()" class="debug-btn">
+        📚 Ver Libros
+      </button>
+      <button (click)="showCreateBookModal()" class="create-book-btn">
+        ➕ Crear Libro
+      </button>
+    </div>
+    
+    <!-- Botones de filtro -->
+    <div class="filter-buttons">
+      <h4>🔍 Filtros de Libros</h4>
+      <div class="filter-container">
+        <button 
+          *ngFor="let filter of filterButtons" 
+          (click)="applyFilter(filter.key)"
+          [class.active]="currentFilter === filter.key"
+          class="filter-btn"
+          [class.filter-all]="filter.key === 'all'"
+          [class.filter-available]="filter.key === 'available'"
+          [class.filter-reserved]="filter.key === 'reserved'"
+        >
+          <span class="filter-icon">{{ filter.icon }}</span>
+          <span class="filter-label">{{ filter.label }}</span>
+          <span class="filter-count">({{ getFilterCount(filter.key) }})</span>
+        </button>
+      </div>
+      <p class="filter-info">
+        Filtro actual: <strong>{{ getFilterLabel(currentFilter) }}</strong>
+      </p>
+    </div>
+
+    <!-- Búsqueda por título -->
+    <div class="search-section">
+      <h4>🔍 Búsqueda por Título</h4>
+      <div class="search-container">
+        <input 
+          type="text" 
+          [(ngModel)]="searchTitle" 
+          placeholder="Ingresa el título del libro..."
+          class="search-input"
+          (input)="onSearchInputChange()"
+          (keyup.enter)="onSearchKeyPress($event)"
+        >
+        <button (click)="clearSearch()" class="clear-search-btn" [disabled]="!searchTitle.trim()">
+          🗑️ Limpiar
+        </button>
+      </div>
+      
+      <!-- Información de búsqueda -->
+      <div *ngIf="searchTitle.trim()" class="search-info">
+        <p *ngIf="isSearching" class="search-status">
+          🔍 Buscando libros con título: <strong>"{{ searchTitle }}"</strong>
+        </p>
+        <p *ngIf="!isSearching && searchResults.length > 0" class="search-results">
+          ✅ Encontrados <strong>{{ searchResults.length }}</strong> libros con título: <strong>"{{ searchTitle }}"</strong>
+        </p>
+        <p *ngIf="!isSearching && searchResults.length === 0 && searchTitle.trim()" class="no-search-results">
+          📭 No se encontraron libros con título: <strong>"{{ searchTitle }}"</strong>
+        </p>
+      </div>
+    </div>
+    
+    <!-- Mensaje de error -->
+    <div *ngIf="!isLoading && error" class="error">
+      ❌ {{ error }}
+    </div>
+    
+    <!-- Lista de libros -->
+    <div *ngIf="!isLoading && !error && getBooksToShow().length > 0" class="books-list">
+      <!-- Indicador de tipo de resultados -->
+      <div *ngIf="isShowingSearchResults()" class="search-results-header">
+        <h3>🔍 Resultados de Búsqueda para "{{ searchTitle }}"</h3>
+        <p>Mostrando {{ searchResults.length }} libro(s) encontrado(s)</p>
+      </div>
+      
+      <div *ngFor="let book of getBooksToShow()" class="book-card" (click)="showBookModal(book)">
+        <h3>{{ book.title }}</h3>
+        <p><strong>Autor:</strong> {{ book.author }}</p>
+        <p><strong>Año:</strong> {{ book.publicationYear }}</p>
+        <span class="status-badge" [ngClass]="getStatusClass(book.status)">
+          {{ getStatusText(book.status) }}
+        </span>
+      </div>
+    </div>
+    <div *ngIf="!isLoading && !error && getBooksToShow().length === 0" class="no-books">
+      <p *ngIf="isShowingSearchResults()">📭 No se encontraron libros con título "{{ searchTitle }}"</p>
+      <p *ngIf="!isShowingSearchResults() && books.length > 0">📭 No hay libros que coincidan con el filtro "{{ getFilterLabel(currentFilter) }}"</p>
+      <p *ngIf="!isShowingSearchResults() && books.length === 0">📭 No se encontraron libros</p>
+    </div>
+    
+    <!-- Información de la API -->
+    <div class="api-info">
+      <h3>🔗 Información de la API</h3>
+      <p><strong>Endpoint:</strong> GET http://localhost:3000/api/books</p>
+      <p><strong>Método:</strong> GET</p>
+      <p><strong>Estado:</strong> 
+        <span *ngIf="isLoading" class="status-loading">⏳ Probando automáticamente...</span>
+        <span *ngIf="!isLoading && !error" class="status-success">✅ Cargado automáticamente</span>
+        <span *ngIf="!isLoading && error" class="status-error">❌ Error en carga automática</span>
+      </p>
+    </div>
+  </div>
+  
+  <!-- Modal del libro -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>📚 {{ selectedBook?.title }}</h2>
+        <button class="close-btn" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="book-details">
+          <!-- Modo de visualización -->
+          <div *ngIf="!isEditing">
+            <p><strong>📝 Título:</strong> {{ selectedBook?.title }}</p>
+            <p><strong>✍️ Autor:</strong> {{ selectedBook?.author }}</p>
+            <p><strong>📅 Año de publicación:</strong> {{ selectedBook?.publicationYear }}</p>
+            <p><strong>🏷️ Estado:</strong> 
+              <span class="status-badge" [ngClass]="getStatusClass(selectedBook?.status || '')">
+                {{ getStatusText(selectedBook?.status || '') }}
+              </span>
+            </p>
+            <p *ngIf="selectedBook?.createdAt"><strong>📅 Creado:</strong> {{ selectedBook?.createdAt | date:'medium' }}</p>
+            <p *ngIf="selectedBook?.updatedAt"><strong>🔄 Actualizado:</strong> {{ selectedBook?.updatedAt | date:'medium' }}</p>
+            <p><strong>🆔 ID:</strong> {{ selectedBook?.bookId }}</p>
+          </div>
+          
+          <!-- Modo de edición -->
+          <div *ngIf="isEditing" class="edit-form">
+            <h3>✏️ Editando: {{ editingBook?.title }}</h3>
+            
+            <div class="form-group">
+              <label for="edit-title">📝 Título:</label>
+              <input 
+                type="text" 
+                id="edit-title" 
+                [(ngModel)]="editingBook!.title" 
+                class="form-input"
+                placeholder="Ingresa el título del libro">
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-author">✍️ Autor:</label>
+              <input 
+                type="text" 
+                id="edit-author" 
+                [(ngModel)]="editingBook!.author" 
+                class="form-input"
+                placeholder="Ingresa el nombre del autor">
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-year">📅 Año de publicación:</label>
+              <input 
+                type="number" 
+                id="edit-year" 
+                [(ngModel)]="editingBook!.publicationYear" 
+                class="form-input"
+                placeholder="Ej: 1954"
+                min="1000" 
+                max="2025">
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-status">🏷️ Estado:</label>
+              <select 
+                id="edit-status" 
+                [(ngModel)]="editingBook!.status" 
+                class="form-select">
+                <option value="available">Disponible</option>
+                <option value="reserved">Reservado</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <!-- Botones en modo de visualización -->
+        <div *ngIf="!isEditing">
+          <button class="edit-book-btn" (click)="editBook()">
+            ✏️ Editar Libro
+          </button>
+          <button class="delete-book-btn" (click)="deleteBook()">
+            🗑️ Borrar Libro
+          </button>
+          <button class="close-modal-btn" (click)="closeModal()">
+            Cerrar
+          </button>
+        </div>
+        
+        <!-- Botones en modo de edición -->
+        <div *ngIf="isEditing">
+          <button class="save-book-btn" (click)="saveBookChanges()">
+            💾 Guardar Cambios
+          </button>
+          <button class="cancel-edit-btn" (click)="cancelEdit()">
+            ❌ Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal para crear libro -->
+  <div *ngIf="showCreateModal" class="modal-overlay" (click)="closeCreateModal()">
+    <div class="modal-content create-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>➕ Crear Nuevo Libro</h2>
+        <button class="close-btn" (click)="closeCreateModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="create-form">
+          <div class="form-group">
+            <label for="create-title">📝 Título:</label>
+            <input 
+              type="text" 
+              id="create-title" 
+              [(ngModel)]="newBook.title" 
+              class="form-input"
+              placeholder="Ingresa el título del libro"
+              required>
+          </div>
+          
+          <div class="form-group">
+            <label for="create-author">✍️ Autor:</label>
+            <input 
+              type="text" 
+              id="create-author" 
+              [(ngModel)]="newBook.author" 
+              class="form-input"
+              placeholder="Ingresa el nombre del autor"
+              required>
+          </div>
+          
+          <div class="form-group">
+            <label for="create-year">📅 Año de publicación:</label>
+            <input 
+              type="number" 
+              id="create-year" 
+              [(ngModel)]="newBook.publicationYear" 
+              class="form-input"
+              placeholder="Ej: 1954"
+              min="1000" 
+              max="2025"
+              required>
+          </div>
+          
+          <div class="form-group">
+            <label for="create-status">🏷️ Estado:</label>
+            <select 
+              id="create-status" 
+              [(ngModel)]="newBook.status" 
+              class="form-select"
+              required>
+              <option value="available">Disponible</option>
+              <option value="reserved">Reservado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="save-book-btn" (click)="createBook()">
+          💾 Crear Libro
+        </button>
+        <button class="cancel-edit-btn" (click)="closeCreateModal()">
+          ❌ Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

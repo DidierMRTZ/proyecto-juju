@@ -1,0 +1,50 @@
+<div class="home-container">
+  <h1>📚 Biblioteca de Libros</h1>
+  
+  <div class="books-section">
+    <h2>📖 Lista de Libros ({{ totalCount }})</h2>
+    
+    <!-- Botón para recargar -->
+    <button (click)="loadBooks()" [disabled]="isLoading" class="reload-btn">
+      🔄 Recargar Libros
+    </button>
+    
+    <!-- Estado de carga -->
+    <div *ngIf="isLoading" class="loading">
+      ⏳ Cargando libros...
+    </div>
+    
+    <!-- Mensaje de error -->
+    <div *ngIf="error" class="error">
+      ❌ {{ error }}
+    </div>
+    
+    <!-- Lista de libros -->
+    <div *ngIf="!isLoading && !error && books.length > 0" class="books-list">
+      <div *ngFor="let book of books" class="book-card">
+        <h3>{{ book.title }}</h3>
+        <p><strong>Autor:</strong> {{ book.author }}</p>
+        <p><strong>Año:</strong> {{ book.publicationYear }}</p>
+        <p><strong>Estado:</strong> 
+          <span [class]="getStatusClass(book.status)" class="status-badge">
+            {{ getStatusText(book.status) }}
+          </span>
+        </p>
+        <p *ngIf="book.createdAt"><strong>Creado:</strong> {{ book.createdAt | date:'short' }}</p>
+      </div>
+    </div>
+    
+    <!-- Mensaje cuando no hay libros -->
+    <div *ngIf="!isLoading && !error && books.length === 0" class="no-books">
+      📭 No hay libros disponibles
+    </div>
+  </div>
+  
+  <!-- Información de la API -->
+  <div class="api-info">
+    <h3>🔗 Información de la API</h3>
+    <p><strong>Endpoint:</strong> GET http://localhost:3000/api/books</p>
+    <p><strong>Estado:</strong> <span [class]="error ? 'status-error' : 'status-success'">{{ error ? 'Error' : 'Conectado' }}</span></p>
+    <p><strong>Total de libros:</strong> {{ books.length }}</p>
+  </div>
+</div>
