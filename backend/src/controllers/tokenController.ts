@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import Token, { IToken } from '../models/Token';
-import User from '../models/Users';
+import User from '../models/User';
 import bcrypt from 'bcrypt';
 
 // Crear token de reset de password
@@ -42,7 +42,7 @@ export const createPasswordResetToken = async (req: Request, res: Response) => {
 
     // En un caso real, acá enviarías el email con el resetToken
     // Por ahora solo lo devolvemos para testing
-    console.log('🔑 TOKEN GENERADO PARA TESTING:', {
+    console.log('TOKEN GENERADO PARA TESTING:', {
       tokenId: token.tokenId,
       resetToken: token.resetToken,
       userId: token.userId,

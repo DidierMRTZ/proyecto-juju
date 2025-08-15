@@ -168,14 +168,14 @@ tokenSchema.pre('save', function(next) {
 // Middleware post-save - logging después de guardar
 tokenSchema.post('save', function(doc) {
   const token = doc as any;
-  console.log(`🔑 Token ${token.tokenType} creado para usuario ${token.userId}`);
+  console.log(`Token ${token.tokenType} creado para usuario ${token.userId}`);
 });
 
 // Middleware post-deleteOne - logging después de eliminar
 tokenSchema.post('deleteOne', function(doc) {
   if (doc) {
     const token = doc as any;
-    console.log(`🗑️ Token ${token.tokenType} eliminado para usuario ${token.userId}`);
+    console.log(`Token ${token.tokenType} eliminado para usuario ${token.userId}`);
   }
 });
 
